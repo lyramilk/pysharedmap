@@ -1,3 +1,11 @@
+# 安装
+补充上传到pypi了，传的sdist，所以也支持python2。
+```
+pip3 install sharedmap
+```
+
+
+
 # 示例
 ```
 import sharedmap
