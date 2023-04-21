@@ -18,10 +18,19 @@ other_sources = [
 	"native/pynative.cpp",
 ]
 
+include_files = [
+	"native/avltree.h",
+	"native/pynative.h",
+	"native/pytree.h",
+	"native/rbtree.h",
+	"native/stringbox.h",
+	"native/tree.h",
+]
+
 if version >= (2,0) and version < (3,0):
-	module1 = Extension('sharedmap',sources = other_sources,libraries = ['rt'],extra_compile_args=["-DNDEBUG"],extra_link_args=["-s"])
+	module1 = Extension('sharedmap',sources = other_sources,include_dirs=['./native'],libraries = ['rt'],extra_compile_args=["-DNDEBUG"],extra_link_args=["-s"])
 elif version >= (3,0) and version < (4,0):
-	module1 = Extension('sharedmap',sources = other_sources,libraries = ['rt'],extra_compile_args=["-DNDEBUG"],extra_link_args=["-s"])
+	module1 = Extension('sharedmap',sources = other_sources,include_dirs=['./native'],libraries = ['rt'],extra_compile_args=["-DNDEBUG"],extra_link_args=["-s"])
 
 
 
@@ -33,13 +42,14 @@ except Exception as e:
 
 
 setup (name = projname,
-	version = '1.0.0',
+	version = '1.0.2',
 	description = projname,
 	long_description=long_description,
 	long_description_content_type="text/markdown",
 	author = "lyramilk",
 	packages=[],
 	ext_modules = [module1],
+	data_files=include_files,
 	install_requires = [],
 	author_email='lyramilk@qq.com',
 	license='Apache License 2.0',
@@ -54,5 +64,4 @@ setup (name = projname,
 	],
 	keywords = 'sharedmap,sharememory,rbtree,avltree',
 )
-
 
