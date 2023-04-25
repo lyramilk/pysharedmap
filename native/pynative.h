@@ -5,7 +5,8 @@
 #include <Python.h>
 
 #if PY_MAJOR_VERSION == 3
-	#define PyString_FromStringAndSize PyBytes_FromStringAndSize
+	//#define PyString_FromStringAndSize PyBytes_FromStringAndSize
+	#define PyString_FromStringAndSize PyUnicode_FromStringAndSize
 #endif
 
 

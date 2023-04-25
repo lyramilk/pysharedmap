@@ -42,7 +42,7 @@ except Exception as e:
 
 
 setup (name = projname,
-	version = '1.0.2',
+	version = '1.0.3',
 	description = projname,
 	long_description=long_description,
 	long_description_content_type="text/markdown",
