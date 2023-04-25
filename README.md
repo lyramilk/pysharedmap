@@ -16,7 +16,7 @@ def t1():
 	wmap.set("zb","1233");
 	wmap.set("tes","32z");
 	wmap.set("红","32是");
-	print(wmap.get("tes").decode("utf8"));
+	print(wmap.get("tes"));
 	wmap.share("test:3325",force=True);
 
 
@@ -27,7 +27,7 @@ t1();
 
 def t2():
 	rmap = sharedmap.sharedmap("test:3325");
-	print(rmap.get("红").decode("utf8"));
+	print(rmap.get("红"));
 
 print("测试读取");
 t2();
@@ -52,7 +52,7 @@ t2();
 | 参数 | 类型 | 说明 |
 | - | - | - |
 | key | str |  |
-| 返回值 | bytes |  |
+| 返回值 | str |  |
 
 
 ### ```share```
@@ -83,7 +83,7 @@ t2();
 | 参数 | 类型 | 说明 |
 | - | - | - |
 | name | str | 共享字典的名字，sharedmap在初始化的时候会用到 |
-| 返回值 | bytes | 成功True |
+| 返回值 | bool | 成功True |
 
 
 ## sharedmap
@@ -103,7 +103,7 @@ t2();
 | 参数 | 类型 | 说明 |
 | - | - | - |
 | key | str |  |
-| 返回值 | bytes |  |
+| 返回值 | str |  |
 
 
 # 实现原理
