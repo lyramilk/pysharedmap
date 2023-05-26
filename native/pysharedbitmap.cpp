@@ -39,16 +39,14 @@ bool static load_data(shared_bitmap_object* obj)
 {
 	char* pbase = obj->sm.ptr();
 
-	unsigned long totalsize = 0;
-	memcpy(&totalsize,pbase,sizeof(totalsize));
 	unsigned int magic = 0x5026;
-	memcpy(&magic,pbase+sizeof(unsigned long)/*totalsize的值*/,sizeof(magic));
+	memcpy(&magic,pbase,sizeof(magic));
 	if(magic != 0x5026){
 		return false;
 	}
 
-	obj->p = (long*)(pbase + 16);
-	obj->size = (long)(pbase + totalsize - (const char*)obj->p + 7) >> intc<sizeof(long)>::square;
+	obj->p = (long*)(pbase + 8);
+	obj->size = (long)(pbase + obj->sm.size() - (const char*)obj->p + 7) >> intc<sizeof(long)>::square;
 	return true;
 }
 
@@ -79,6 +77,35 @@ PyObject * py_shared_bitmap_set(PyObject *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
+PyObject * py_shared_bitmap_size(PyObject *self, PyObject *args)
+{
+	if(self == NULL){
+		return NULL;
+	}
+	shared_bitmap_object* obj = ((pylyramilkObject<shared_bitmap_object>*)(self))->obj;
+	return Py_BuildValue("l",obj->size << intc<sizeof(long)>::square);
+}
+
+PyObject * py_shared_bitmap_resize(PyObject *self, PyObject *args)
+{
+	if(self == NULL){
+		return NULL;
+	}
+	long size = 0;
+	if (!(PyArg_ParseTuple(args, "l",&size))) {
+		return NULL;
+	}
+	long totalsize = size + 8;
+	shared_bitmap_object* obj = ((pylyramilkObject<shared_bitmap_object>*)(self))->obj;
+
+	if(obj->sm.resize(totalsize)){
+		if(load_data(obj)){
+			Py_RETURN_TRUE;
+		}
+	}
+	Py_RETURN_FALSE;
+}
+
 PyObject * py_shared_bitmap_get(PyObject *self, PyObject *args)
 {
 	if(self == NULL){
@@ -99,10 +126,8 @@ PyObject * py_shared_bitmap_get(PyObject *self, PyObject *args)
 
 	if(obj->p[bytesindex] & (1<<offset)){
 		Py_RETURN_TRUE;
-	}else{
-		Py_RETURN_FALSE;
 	}
-
+	Py_RETURN_FALSE;
 }
 
 PyObject * py_shared_bitmap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -145,7 +170,6 @@ PyObject * py_shared_bitmap_new(PyTypeObject *type, PyObject *args, PyObject *kw
 	return NULL;
 }
 
-//	{"create", py_shared_bitmap_create, METH_VARARGS | METH_STATIC|METH_KEYWORDS},
 PyObject * py_shared_bitmap_create(PyTypeObject *, PyObject *args, PyObject *kwds)
 {
 	PyTypeObject *type = &shareablebitmap_ObjectType;
@@ -159,12 +183,13 @@ PyObject * py_shared_bitmap_create(PyTypeObject *, PyObject *args, PyObject *kwd
 
 		static const char *kwlist[] = {"name", "size", "force",NULL};
 		if (PyArg_ParseTupleAndKeywords(args,kwds, "s#l|b",(char**)kwlist, &sname, &lname, &size,&force)) {
+			long totalsize = size + 8;
 			pylyramilkObject<shared_bitmap_object>* pobj = ((pylyramilkObject<shared_bitmap_object>*)(self));
 			shared_bitmap_object* obj = pobj->obj = new shared_bitmap_object;
 			obj->sharedmemoryname.assign(sname,lname);
 			obj->key = strtokey(sname,lname,SHARED_TYPE_BITMAP);
 
-			if(!obj->sm.init(obj->key,size,IPC_CREAT|IPC_EXCL|0666)){
+			if(!obj->sm.init(obj->key,totalsize,IPC_CREAT|IPC_EXCL|0666)){
 				if(errno == EEXIST && force == 1){
 					if(!sharememory::remove(obj->key)){
 						delete obj;
@@ -172,7 +197,7 @@ PyObject * py_shared_bitmap_create(PyTypeObject *, PyObject *args, PyObject *kwd
 						PyErr_SetString(PyExc_OSError, strerror(errno));
 						return NULL;
 					}
-					if(!obj->sm.init(obj->key,size,IPC_CREAT|IPC_EXCL|0666)){
+					if(!obj->sm.init(obj->key,totalsize,IPC_CREAT|IPC_EXCL|0666)){
 						delete obj;
 						Py_TYPE(self)->tp_free((PyObject*)self);
 						PyErr_SetString(PyExc_OSError, strerror(errno));
@@ -187,11 +212,9 @@ PyObject * py_shared_bitmap_create(PyTypeObject *, PyObject *args, PyObject *kwd
 			}
 
 
-			long totalsize = size + 16;
 			char* psharedmemory = obj->sm.ptr();
-			memcpy(psharedmemory,&totalsize,sizeof(totalsize));
 			unsigned int magic = 0x5026;
-			memcpy(psharedmemory + sizeof(unsigned long long)/*totalsize的值*/,&magic,sizeof(magic));
+			memcpy(psharedmemory,&magic,sizeof(magic));
 
 			if(load_data(obj)){
 				return self;
@@ -226,6 +249,8 @@ PyMethodDef pyshareablebitmapObjectClassMethods[] = {
 	{"create", (PyCFunction)py_shared_bitmap_create, METH_VARARGS | METH_STATIC|METH_KEYWORDS},
 	{"set", py_shared_bitmap_set, METH_VARARGS},
 	{"get", py_shared_bitmap_get, METH_VARARGS},
+	{"size", py_shared_bitmap_size, METH_VARARGS},
+	{"resize", py_shared_bitmap_resize, METH_VARARGS},
 	{NULL, NULL},
 };
 

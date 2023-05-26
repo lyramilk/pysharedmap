@@ -28,8 +28,14 @@ t2();
 
 
 
-sbm = sharedmap.sharedbitmap.create("bbt",20000000,force=True);
-sbm.set(20000000,True);
+sbm = sharedmap.sharedbitmap.create("bbt",100,force=True);
+sbm.set(100,True);
+
+print("bitmap.size=",sbm.size());
+sbm.resize(20000000);
+
+print("bitmap.resize=",sbm.size());
 
 print(sbm.get(15475645));
 print(sbm.get(20000000));
+print(sbm.get(100));

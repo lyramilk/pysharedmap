@@ -6,6 +6,7 @@
 #include "stringbox.h"
 
 #include <sys/shm.h>
+#include <memory.h>
 
 
 unsigned int inline bkdr(const char* p,std::size_t l)
@@ -23,12 +24,14 @@ class sharememory
 	int shmid;
 	char* p;
 
-	unsigned long _size;
+	long _size;
+	key_t key;
   public:
 	sharememory()
 	{
 		shmid = -1;
 		p = NULL;
+		key = 0;
 	}
 
 	bool init(key_t key, size_t size, int shmflg)
@@ -42,7 +45,11 @@ class sharememory
 			return false;
 		}
 
-		_size = size;
+		this->key = key;
+
+		struct shmid_ds ds;
+		if(shmctl(shmid,IPC_STAT,&ds) != 0) return false;
+		_size = ds.shm_segsz;
 		return true;
 	}
 
@@ -54,6 +61,28 @@ class sharememory
 		}
 		p = NULL;
 		return true;
+	}
+
+	bool resize(long size)
+	{
+		if(_size >= size) return true;
+		if(shmctl(shmid,IPC_RMID,NULL) != 0) return false;
+
+		int newshmid = shmget(key,size,IPC_CREAT|IPC_EXCL|0666);
+		char* newptr = (char*)shmat(newshmid,0,0);
+		memcpy(newptr,p,_size);
+		shmdt(p);
+
+		memset(newptr + _size,0,size - _size);
+
+		_size = size;
+		p = newptr;
+		return true;
+	}
+
+	unsigned long size()
+	{
+		return _size;
 	}
 
 	bool static remove(key_t key)
