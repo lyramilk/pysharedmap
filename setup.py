@@ -14,6 +14,7 @@ other_sources = [
 	"native/avltree.cpp",
 	"native/rbtree.cpp",
 	"native/pyshareabledict.cpp",
+	"native/pysharedbitmap.cpp",
 	"native/pyrbtree.cpp",
 	"native/pynative.cpp",
 ]
@@ -42,7 +43,7 @@ except Exception as e:
 
 
 setup (name = projname,
-	version = '1.0.3',
+	version = '1.0.5',
 	description = projname,
 	long_description=long_description,
 	long_description_content_type="text/markdown",

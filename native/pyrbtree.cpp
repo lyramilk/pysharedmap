@@ -93,14 +93,16 @@ PyObject * py_rbtree_share(PyObject *self, PyObject *args, PyObject *kwds)
 	unsigned long totalsize = sizeof(unsigned long long)/*totalsize的值*/ + sizeof(unsigned int)/*魔法数*/ + sizeof(unsigned long)/*avl树在stringbox中的id*/ + obj->sb->size();
 
 
-	key_t key = strtokey(sname,lname);
+	key_t key = strtokey(sname,lname,SHARED_TYPE_AVL);
 
 	sharememory sm;
 	if(!sm.init(key,totalsize,IPC_CREAT|IPC_EXCL|0666)){
 		if(errno == EEXIST && force == 1){
-			sm.init(key,totalsize,IPC_CREAT|0666);
-			sm.del();
-			if(!sm.init(key,totalsize,IPC_CREAT|0666)){
+			if(!sharememory::remove(key)){
+				PyErr_SetString(PyExc_OSError, strerror(errno));
+				return NULL;
+			}
+			if(!sm.init(key,totalsize,IPC_CREAT|IPC_EXCL|0666)){
 				PyErr_SetString(PyExc_OSError, strerror(errno));
 				return NULL;
 			}
@@ -163,13 +165,13 @@ PyObject * py_rbtree_static_remove(PyObject *, PyObject *args)
 	}
 
 
-	key_t key = strtokey(sname,lname);
+	key_t key = strtokey(sname,lname,SHARED_TYPE_AVL);
 	sharememory sm;
 	if(!sm.init(key,0,0)){
 		Py_RETURN_FALSE;
 	}
 
-	sm.del();
+	sharememory::remove(key);
 
 	Py_RETURN_TRUE;
 }

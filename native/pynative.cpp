@@ -22,6 +22,13 @@ static bool pydefineobject(PyObject* m)
 		Py_INCREF(&shareabledict_ObjectType);
 		PyModule_AddObject(m, "sharedmap", (PyObject *)&shareabledict_ObjectType);
 	}
+
+	if(PyType_Ready(&shareablebitmap_ObjectType) < 0){
+		printf("sharedmap.sharedbitmap not ready\n");
+	}else{
+		Py_INCREF(&shareablebitmap_ObjectType);
+		PyModule_AddObject(m, "sharedbitmap", (PyObject *)&shareablebitmap_ObjectType);
+	}
 	return true;
 }
 

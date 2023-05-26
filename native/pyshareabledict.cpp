@@ -2,7 +2,7 @@
 #include <string.h>
 #include <errno.h>
 
-bool load_data(shareabledict_object* obj)
+bool static load_data(shareabledict_object* obj)
 {
 	if(obj->avt){
 		delete obj->avt;
@@ -91,7 +91,6 @@ PyObject * py_shareabledict_new(PyTypeObject *type, PyObject *args, PyObject *kw
 {
 	PyObject * self = type->tp_alloc(type, 0);
 	if(self){
-
 		char *sname;
 		Py_ssize_t lname;
 		if (PyArg_ParseTuple(args, "s#", &sname, &lname)) {
@@ -100,23 +99,23 @@ PyObject * py_shareabledict_new(PyTypeObject *type, PyObject *args, PyObject *kw
 			shareabledict_object* obj = pobj->obj = new shareabledict_object;
 
 
-			obj->key = strtokey(sname,lname);
+			obj->key = strtokey(sname,lname,SHARED_TYPE_AVL);
 			sharememory sm;
 			if(!sm.init(obj->key,0,0)){
-				PyErr_SetString(PyExc_OSError, strerror(errno));
-
 				delete obj;
 				Py_TYPE(self)->tp_free((PyObject*)self);
+				PyErr_SetString(PyExc_OSError, strerror(errno));
 				return NULL;
 			}
 
 			if(load_data(obj)){
 				return self;
 			}
+			delete obj;
+			Py_TYPE(self)->tp_free((PyObject*)self);
 			PyErr_SetString(PyExc_OSError, strerror(errno));
 			return NULL;
 		}
-		return NULL;
 	}
 	PyErr_SetString(PyExc_OSError, strerror(errno));
 	return NULL;

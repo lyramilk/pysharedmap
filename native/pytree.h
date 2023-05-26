@@ -36,6 +36,7 @@ class sharememory
 		if(p){
 			clear();
 		}
+
 		shmid = shmget(key,size,shmflg);
 		if(shmid == -1){
 			return false;
@@ -45,17 +46,21 @@ class sharememory
 		return true;
 	}
 
-	void clear()
+	bool clear()
 	{
-		if(p) shmdt(p);
+		if(p){
+			int r = shmdt(p);
+			if(r == -1) return false;
+		}
 		p = NULL;
+		return true;
 	}
 
-	bool del()
+	bool static remove(key_t key)
 	{
+		int shmid = shmget(key,0,0);
 		if(shmid){
-			shmctl(shmid,IPC_RMID,NULL);
-			return true;
+			return shmctl(shmid,IPC_RMID,NULL) == 0;
 		}
 		return false;
 	}
@@ -80,10 +85,18 @@ class sharememory
 	}
 };
 
-key_t inline strtokey(const char* sname,unsigned long lname)
+
+const int SHARED_TYPE_AVL = 1;
+const int SHARED_TYPE_BITMAP = 1;
+
+
+
+
+key_t inline strtokey(const char* sname,unsigned long lname,int stype)
 {
 	std::string sharedmemoryname = "lyramilk.sharedmemory.";
 	sharedmemoryname.append(sname,lname);
+	sharedmemoryname.append((const char*)&stype,sizeof(stype));
 	key_t key = bkdr(sharedmemoryname.c_str(),sharedmemoryname.size());
 	return key;
 }
@@ -211,5 +224,21 @@ void py_shareabledict_dealloc(PyObject* self);
 
 extern PyMethodDef pyshareabledictObjectClassMethods[];
 extern PyTypeObject shareabledict_ObjectType;
+
+
+
+
+struct shared_bitmap_object
+{
+	std::string sharedmemoryname;
+	key_t key;
+	sharememory sm;
+	long* p;
+	long size;
+};
+
+
+extern PyMethodDef pyshareablebitmapObjectClassMethods[];
+extern PyTypeObject shareablebitmap_ObjectType;
 
 #endif
